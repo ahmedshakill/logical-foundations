@@ -391,8 +391,8 @@ Proof.
   (* We just need to swap (n + m) for (m + n)... seems
      like add_comm should do the trick! *)
   assert (H: n + m = m + n).
-   { rewrite -> add_comm. reflexivity.}
-  rewrite -> H.
+   { rewrite -> add_comm. reflexivity. }
+  rewrite -> H. rewrite -> add_assoc.
    reflexivity.
 Qed.
 
@@ -568,7 +568,7 @@ Proof.
   (* FILL IN HERE *)
   intros n m p.
   rewrite -> add_assoc.
-  assert (H: n + m = m + n). { rewrite -> add_comm. reflexivity.} rewrite H. rewrite -> add_assoc. reflexivity.
+  assert (H: n + m = m + n). { rewrite -> add_comm. reflexivity. } rewrite H. rewrite -> add_assoc. reflexivity.
 Qed.
 
 (** Now prove commutativity of multiplication.  You will probably want
