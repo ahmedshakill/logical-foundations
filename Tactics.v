@@ -47,8 +47,8 @@ Theorem silly2 : forall (n m o p : nat),
   (n = m -> [n;o] = [m;p]) ->
   [n;o] = [m;p].
 Proof.
-  intros n m o p eq1 eq2.
-  apply eq2. apply eq1.  Qed.
+  intros n m o p E F.
+  apply F. apply E. Qed.
 
 (** Typically, when we use [apply H], the statement [H] will
     begin with a [forall] that introduces some _universally quantified
@@ -77,7 +77,11 @@ Theorem silly_ex : forall p,
   even p = true ->
   odd (S p) = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n H1 H2 p.
+  apply H2. apply H1. apply p.
+Qed.
+  
+
 (** [] *)
 
 (** To use the [apply] tactic, the (conclusion of the) fact
@@ -90,6 +94,7 @@ Theorem silly3 : forall (n m : nat),
   m = n.
 Proof.
   intros n m H.
+
 
   (** Here we cannot use [apply] directly... *)
 
@@ -112,7 +117,9 @@ Theorem rev_exercise1 : forall (l l' : list nat),
   l = rev l' ->
   l' = rev l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros l l' H.
+  symmetry. rewrite -> H. apply rev_involutive.
+Qed.  
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (apply_rewrite)
@@ -122,7 +129,11 @@ Proof.
     applied? *)
 
 (* FILL IN HERE
-
+    The [apply] tactic is used to apply a previously defined theorem
+    to the goal.  The [rewrite] tactic is used to rewrite the goal
+    using a previously defined theorem.  The [apply] tactic is used
+    when the goal is a statement that can be proved.  The [rewrite]
+    tactic is used when the goal is a statement that can be rewritten.    
     [] *)
 
 (* ################################################################# *)
@@ -195,7 +206,11 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = m ->
      (n + p) = (minustwo o).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o p H1 H2.
+  transitivity m.
+  apply H2. apply H1.
+Qed.
+  
 (** [] *)
 
 (* ################################################################# *)
@@ -282,7 +297,13 @@ Example injection_ex3 : forall (X : Type) (x y z : X) (l j : list X),
   j = z :: l ->
   x = y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x y z l j H1 H2.
+  injection H1 as H3 H4.
+  assert(H5: x::l = y::l -> x=y). { intros H6. injection H6 as H7. apply H7.}.
+  rewrite H5. reflexivity.
+  rewrite H4. rewrite H2.  rewrite H3. reflexivity.
+Qed.
+  
 (** [] *)
 
 (** So much for injectivity of constructors.  What about disjointness? *)

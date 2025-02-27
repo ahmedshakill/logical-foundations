@@ -1080,8 +1080,8 @@ Qed.
 Fixpoint eqblist (l1 l2 : natlist) : bool :=
   match l1, l2 with
   | [],[] => true
-  | [], l' => false
-  | l', [] => false
+  | [], _ => false
+  | _, [] => false
   | m::l1', n::l2' => if(is_same m n) then eqblist l1' l2' else false
   end.
              
