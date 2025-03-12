@@ -7,7 +7,7 @@
 ##         #     GNU Lesser General Public License Version 2.1          ##
 ##         #     (see LICENSE file for the text of the license)         ##
 ##########################################################################
-## GNUMakefile for Coq 8.18.0
+## GNUMakefile for Coq 8.19.2
 
 # For debugging purposes (must stay here, don't move below)
 INITIAL_VARS := $(.VARIABLES)
@@ -45,7 +45,7 @@ HASNATDYNLINK     := $(COQMF_HASNATDYNLINK)
 OCAMLWARN         := $(COQMF_WARN)
 
 Makefile.conf: _CoqProject
-	coq_makefile -f _CoqProject AltAutoTest.v AltAuto.v AutoTest.v Auto.v BasicsTest.v Basics.v BibTest.v Bib.v ExtractionTest.v Extraction.v ImpCEvalFunTest.v ImpCEvalFun.v ImpParserTest.v ImpParser.v ImpTest.v Imp.v IndPrinciplesTest.v IndPrinciples.v IndPropTest.v IndProp.v InductionTest.v Induction.v ListsTest.v Lists.v LogicTest.v Logic.v MapsTest.v Maps.v PolyTest.v Poly.v PostscriptTest.v Postscript.v PrefaceTest.v Preface.v ProofObjectsTest.v ProofObjects.v RelTest.v Rel.v TacticsTest.v Tactics.v -o Makefile
+	coq_makefile -f _CoqProject AltAuto.v AltAutoTest.v Auto.v AutoTest.v Basics.v BasicsTest.v Bib.v BibTest.v Extraction.v ExtractionTest.v Imp.v ImpCEvalFun.v ImpCEvalFunTest.v ImpParser.v ImpParserTest.v ImpTest.v IndPrinciples.v IndPrinciplesTest.v IndProp.v IndPropTest.v Induction.v InductionTest.v Lists.v ListsTest.v Logic.v LogicTest.v Maps.v MapsTest.v Poly.v PolyTest.v Postscript.v PostscriptTest.v Preface.v PrefaceTest.v ProofObjects.v ProofObjectsTest.v Rel.v RelTest.v Tactics.v TacticsTest.v -o Makefile
 
 # This file can be created by the user to hook into double colon rules or
 # add any other Makefile code he may need
@@ -278,7 +278,7 @@ COQDOCLIBS?=$(COQLIBS_NOML)
 # The version of Coq being run and the version of coq_makefile that
 # generated this makefile
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
-COQMAKEFILE_VERSION:=8.18.0
+COQMAKEFILE_VERSION:=8.19.2
 
 # COQ_SRC_SUBDIRS is for user-overriding, usually to add
 # `user-contrib/Foo` to the includes, we keep COQCORE_SRC_SUBDIRS for
@@ -305,6 +305,14 @@ ifneq (,$(TIMING))
   TIMING_ARG=-time-file $<.$(TIMING_EXT)
 else
   TIMING_ARG=
+endif
+
+ifneq (,$(PROFILING))
+  PROFILE_ARG=-profile $<.prof.json
+  PROFILE_ZIP=gzip $<.prof.json
+else
+  PROFILE_ARG=
+  PROFILE_ZIP=true
 endif
 
 # Files #######################################################################
@@ -758,9 +766,9 @@ $(filter %.cmx, $(MLFILES:.ml=.cmx) $(MLGFILES:.mlg=.cmx)): %.cmx: %.ml
 
 
 $(MLLIBFILES:.mllib=.cmxs): %.cmxs: %.cmxa
-	$(SHOW)'CAMLOPT -shared -g -o $@'
+	$(SHOW)'CAMLOPT -shared -o $@'
 	$(HIDE)$(TIMER) $(CAMLOPTLINK) $(CAMLDEBUG) $(CAMLFLAGS) $(FINDLIBPKGS) \
-		-shared -g -o $@ $<
+		-shared -o $@ $<
 
 $(MLLIBFILES:.mllib=.cma): %.cma: | %.mllib
 	$(SHOW)'CAMLC -a -o $@'
@@ -772,9 +780,9 @@ $(MLLIBFILES:.mllib=.cmxa): %.cmxa: | %.mllib
 
 
 $(MLPACKFILES:.mlpack=.cmxs): %.cmxs: %.cmxa
-	$(SHOW)'CAMLOPT -shared -g -o $@'
+	$(SHOW)'CAMLOPT -shared -o $@'
 	$(HIDE)$(TIMER) $(CAMLOPTLINK) $(CAMLDEBUG) $(CAMLFLAGS) $(FINDLIBPKGS) \
-		-shared -g -o $@ $<
+		-shared -o $@ $<
 
 $(MLPACKFILES:.mlpack=.cmxa): %.cmxa: %.cmx | %.mlpack
 	$(SHOW)'CAMLOPT -a -o $@'
@@ -794,9 +802,9 @@ $(MLPACKFILES:.mlpack=.cmx): %.cmx: | %.mlpack
 
 # This rule is for _CoqProject with no .mllib nor .mlpack
 $(filter-out $(MLLIBFILES:.mllib=.cmxs) $(MLPACKFILES:.mlpack=.cmxs) $(addsuffix .cmxs,$(PACKEDFILES)) $(addsuffix .cmxs,$(LIBEDFILES)),$(MLFILES:.ml=.cmxs) $(MLGFILES:.mlg=.cmxs)): %.cmxs: %.cmx
-	$(SHOW)'[deprecated,use-mllib-or-mlpack] CAMLOPT -shared -g -o $@'
+	$(SHOW)'[deprecated,use-mllib-or-mlpack] CAMLOPT -shared -o $@'
 	$(HIDE)$(TIMER) $(CAMLOPTLINK) $(CAMLDEBUG) $(CAMLFLAGS) $(FINDLIBPKGS) \
-		-shared -g -o $@ $<
+		-shared -o $@ $<
 
 # can't make
 # https://www.gnu.org/software/make/manual/make.html#Static-Pattern
@@ -808,12 +816,13 @@ ifneq (,$(filter grouped-target,$(.FEATURES)))
 define globvorule=
 
 # take care to $$ variables using $< etc
-  $(1).vo $(1).glob &: $(1).v | $(VDFILE)
-	$(SHOW)COQC $(1).v
-	$(HIDE)$$(TIMER) $(COQC) $(COQDEBUG) $$(TIMING_ARG) $(COQFLAGS) $(COQLIBS) $(1).v
+  $(1).vo $(1).glob &: $(1).v | $$(VDFILE)
+	$$(SHOW)COQC $(1).v
+	$$(HIDE)$$(TIMER) $$(COQC) $$(COQDEBUG) $$(TIMING_ARG) $$(PROFILE_ARG) $$(COQFLAGS) $$(COQLIBS) $(1).v
+	$$(HIDE)$$(PROFILE_ZIP)
 ifeq ($(COQDONATIVE), "yes")
-	$(SHOW)COQNATIVE $(1).vo
-	$(HIDE)$(call TIMER,$(1).vo.native) $(COQNATIVE) $(COQLIBS) $(1).vo
+	$$(SHOW)COQNATIVE $(1).vo
+	$$(HIDE)$$(call TIMER,$(1).vo.native) $$(COQNATIVE) $$(COQLIBS) $(1).vo
 endif
 
 endef
@@ -821,7 +830,8 @@ else
 
 $(VOFILES): %.vo: %.v | $(VDFILE)
 	$(SHOW)COQC $<
-	$(HIDE)$(TIMER) $(COQC) $(COQDEBUG) $(TIMING_ARG) $(COQFLAGS) $(COQLIBS) $<
+	$(HIDE)$(TIMER) $(COQC) $(COQDEBUG) $(TIMING_ARG) $(PROFILE_ARG) $(COQFLAGS) $(COQLIBS) $<
+	$(HIDE)$(PROFILE_ZIP)
 ifeq ($(COQDONATIVE), "yes")
 	$(SHOW)COQNATIVE $@
 	$(HIDE)$(call TIMER,$@.native) $(COQNATIVE) $(COQLIBS) $@

@@ -286,9 +286,10 @@ Theorem injection_ex1 : forall (n m o : nat),
   n = m.
 Proof.
   intros n m o H.
-  (* WORKED IN CLASS *)
   injection H as H1 H2.
-  rewrite H1. rewrite H2. reflexivity.
+  rewrite H1.
+  rewrite H2.
+  reflexivity.
 Qed.
 
 (** **** Exercise: 3 stars, standard (injection_ex3) *)
@@ -299,11 +300,13 @@ Example injection_ex3 : forall (X : Type) (x y z : X) (l j : list X),
 Proof.
   intros X x y z l j H1 H2.
   injection H1 as H3 H4.
-  assert(H5: x::l = y::l -> x=y). { intros H6. injection H6 as H7. apply H7.}.
-  rewrite H5. reflexivity.
-  rewrite H4. rewrite H2.  rewrite H3. reflexivity.
+  assert (H5: y::l = z::l -> y = z). { intros H6. injection H6 as H7 . apply H7. }
+  assert (H8: y = z). { apply H5. rewrite H4. apply H2.}
+  transitivity z. apply H3. symmetry. apply H8.
 Qed.
-  
+
+
+
 (** [] *)
 
 (** So much for injectivity of constructors.  What about disjointness? *)
@@ -325,6 +328,7 @@ Theorem discriminate_ex1 : forall (n m : nat),
   n = m.
 Proof.
   intros n m contra. discriminate contra. Qed.
+
 
 Theorem discriminate_ex2 : forall (n : nat),
   S n = O ->
@@ -353,7 +357,11 @@ Example discriminate_ex3 :
     x :: y :: l = [] ->
     x = z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x y z l j H.
+  discriminate H.
+Qed.
+
+
 (** [] *)
 
 (** For a more useful example, we can use [discriminate] to make a
@@ -363,6 +371,11 @@ Theorem eqb_0_l : forall n,
    0 =? n = true -> n = 0.
 Proof.
   intros n.
+(**  destruct n as [|  n'] eqn: E.
+  - intros H. reflexivity.
+  - intros H. discriminate H.
+Qed.
+**)
 
 (** We can proceed by case analysis on [n]. The first case is
     trivial. *)
@@ -667,7 +680,17 @@ Proof.
 Theorem eqb_true : forall n m,
   n =? m = true -> n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - intros m H. destruct m as [|m'] eqn: E'.
+    + reflexivity.
+    + discriminate H.
+  - intros m H. destruct m as [|m'] eqn: E'.
+    + discriminate H.
+    + f_equal. apply IHn'. simpl in H. apply H.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (eqb_true_informal)
@@ -690,7 +713,22 @@ Theorem plus_n_n_injective : forall n m,
   n + n = m + m ->
   n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. 
+  induction n as [|n' IHn'].
+  - intros m E. destruct m as [|m'] eqn: E'.
+    + reflexivity.
+    + discriminate E.
+  - intros m Eq. destruct m as [|m'] eqn: E'.
+    + discriminate Eq.
+    + f_equal. apply IHn'.
+      rewrite <- plus_n_Sm in Eq.
+      rewrite <- plus_n_Sm in Eq.
+      injection Eq as H'.
+      apply H'.
+Qed.
+
+      
+  (** plus_n_Sm: forall n m : nat, S (n + m) = n + S m  **)
 (** [] *)
 
 (** The strategy of doing fewer [intros] before an [induction] to
@@ -793,11 +831,23 @@ Proof.
 
     Prove this by induction on [l]. *)
 
+Search "nth".
+
 Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
   length l = n ->
   nth_error l n = None.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n X l.
+  generalize dependent n.
+  induction l as [| n' l' IHl'].
+  - simpl. induction n as [|n'' IHn'].
+    + reflexivity.
+    + simpl. intros contra. discriminate contra.
+  - intros n. destruct n.
+    + intros contra. discriminate contra.
+    + intros H. injection H. simpl. apply IHl'.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -832,7 +882,7 @@ Proof.
     about multiplication at our disposal.  In particular, we know that
     it is commutative and associative, and from these it is not hard
     to finish the proof. *)
-
+  
   rewrite mult_assoc.
   assert (H : n * m * n = n * n * m).
     { rewrite mul_comm. apply mult_assoc. }
@@ -985,6 +1035,9 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
+      
+  
+  
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
